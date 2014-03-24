@@ -6,15 +6,22 @@ object DataMapperExample {
   def main(args: Array[String]) {
     Database.forURL("jdbc:h2:itemdb;DATABASE_TO_UPPER=false", driver = "org.h2.Driver") withSession {
       implicit session =>
-        SpotFinder.findSpot("アプカレの卵").foreach(println)
+        new SpotPrinter().print("アプカレの卵")
     }
   }
 }
 
-object SpotFinder {
+class SpotPrinter {
+  val spotFinder = new SpotFinder()
+  def print(itemName: String)(implicit session: H2Driver.backend.Session) = {
+    spotFinder.find(itemName).foreach(println)
+  }
+}
+
+class SpotFinder {
   private val dataMapper = new SpotDataMapper()
-  def findSpot(itemName: String)(implicit session: H2Driver.backend.Session): Seq[Spot] = {
-    dataMapper.findSpotForDrop(itemName) ++ dataMapper.findSpotForGathering(itemName)
+  def find(itemName: String)(implicit session: H2Driver.backend.Session): Seq[Spot] = {
+    dataMapper.findSpot(itemName)
   }
 }
 
@@ -24,6 +31,10 @@ class SpotDataMapper {
   private val spots = TableQuery[Spots]
   private val dropItemSpotRelations = TableQuery[DropItemSpotRelations]
   private val gatheringItemSpotRelations = TableQuery[GatheringItemSpotRelations]
+
+  def findSpot(itemName: String)(implicit session: H2Driver.backend.Session): Seq[Spot] = {
+    findSpotForDrop(itemName) ++ findSpotForGathering(itemName)
+  }
 
   def findSpotForDrop(itemName: String)(implicit session: H2Driver.backend.Session): Seq[Spot] = {
     val spotsForDrop = for(((i, r), s) <- dropItems.filter(_.name === itemName)
@@ -41,12 +52,6 @@ class SpotDataMapper {
      spotsForGathering.list()
   }
 }
-
-case class DropItem(id: Int, name: String, requireLevel: Int, enemyName: String)
-case class DropItemSpotRelation(dropItemId: Int, spotId: Int)
-case class GatheringItem(id: Int, name: String, requireLevel: Int, requireGathererClass: String)
-case class GatheringItemSpotRelation(gatheringItemId: Int, spotId: Int)
-case class Spot(id: Int, name: String, x: Int, y: Int)
 
 class DropItems(tag: Tag) extends Table[datamapper.DropItem](tag, "drop_items") {
   def id = column[Int]("id", O.PrimaryKey)
@@ -83,3 +88,9 @@ class GatheringItemSpotRelations(tag: Tag) extends Table[datamapper.GatheringIte
   def spotId = column[Int]("spot_id")
   def * = (gatheringItemId, spotId) <> (datamapper.GatheringItemSpotRelation.tupled, datamapper.GatheringItemSpotRelation.unapply)
 }
+
+case class DropItem(id: Int, name: String, requireLevel: Int, enemyName: String)
+case class DropItemSpotRelation(dropItemId: Int, spotId: Int)
+case class GatheringItem(id: Int, name: String, requireLevel: Int, requireGathererClass: String)
+case class GatheringItemSpotRelation(gatheringItemId: Int, spotId: Int)
+case class Spot(id: Int, name: String, x: Int, y: Int)

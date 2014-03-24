@@ -8,7 +8,7 @@ object TransactionScriptExample {
   def main(args: Array[String]) {
     Database.forURL("jdbc:h2:itemdb;DATABASE_TO_UPPER=false", driver = "org.h2.Driver") withSession {
       implicit session =>
-        SpotFinder.findSpot("アプカレの卵").foreach(println)
+        SpotFinder.find("アプカレの卵").foreach(println)
     }
   }
 }
@@ -16,7 +16,7 @@ object TransactionScriptExample {
 case class Spot(id: Int, name: String, x: Int, y: Int)
 
 object SpotFinder {
-  def findSpot(itemName: String)(implicit session: H2Driver.backend.Session): Seq[Spot] = {
+  def find(itemName: String)(implicit session: H2Driver.backend.Session): Seq[Spot] = {
       implicit val spotConverter = GetResult(r => Spot(r.<<, r.<<, r.<<, r.<<))
       val queryForDrop = Q.query[String, Spot]( """
       |select
@@ -37,7 +37,7 @@ object SpotFinder {
       |where
       |    drop_items.name = ?""".stripMargin)
       val dropItems = queryForDrop.list(itemName)
-
+    
       val queryForGathering = Q.query[String, Spot]("""
       |select
       |    spots.id,

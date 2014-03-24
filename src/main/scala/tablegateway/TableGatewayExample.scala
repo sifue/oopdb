@@ -6,13 +6,13 @@ object TableGatewayExample {
   def main(args: Array[String]) {
     Database.forURL("jdbc:h2:itemdb;DATABASE_TO_UPPER=false", driver = "org.h2.Driver") withSession {
       implicit session =>
-        SpotFinder.findSpot("アプカレの卵").foreach(println)
+        SpotFinder.find("アプカレの卵").foreach(println)
     }
   }
 }
 
 object SpotFinder {
-  def findSpot(itemName: String)(implicit session: H2Driver.backend.Session): Seq[Spot] = {
+  def find(itemName: String)(implicit session: H2Driver.backend.Session): Seq[Spot] = {
       val spotsForDrop = for(((i, r), s) <- dropItems.filter(_.name === itemName)
         leftJoin dropItemSpotRelations on (_.id  === _.dropItemId)
         leftJoin spots on ( _._2.spotId === _.id)
