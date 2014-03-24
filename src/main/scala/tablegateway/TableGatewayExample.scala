@@ -23,7 +23,7 @@ object SpotFinder {
         leftJoin spots on ( _._2.spotId === _.id)
       ) yield s
 
-      spotsForDrop.list() ++ spotsForGathering.list()
+    (spotsForDrop.list() ++ spotsForGathering.list()).map(s => Spot(s._1, s._2, s._3, s._4))
   }
 
   val dropItems = TableQuery[DropItems]
@@ -33,44 +33,40 @@ object SpotFinder {
   val gatheringItemSpotRelations = TableQuery[GatheringItemSpotRelations]
 }
 
-case class DropItem(id: Int, name: String, requireLevel: Int, enemyName: String)
-case class DropItemSpotRelation(dropItemId: Int, spotId: Int)
-case class GatheringItem(id: Int, name: String, requireLevel: Int, requireGathererClass: String)
-case class GatheringItemSpotRelation(gatheringItemId: Int, spotId: Int)
 case class Spot(id: Int, name: String, x: Int, y: Int)
 
-class DropItems(tag: Tag) extends Table[tablegateway.DropItem](tag, "drop_items") {
+class DropItems(tag: Tag) extends Table[(Int, String, Int, String)](tag, "drop_items") {
   def id = column[Int]("id", O.PrimaryKey)
   def name = column[String]("name")
   def requireLevel = column[Int]("require_level")
   def enemyName = column[String]("enemy_name")
-  def * = (id, name, requireLevel, enemyName) <> (tablegateway.DropItem.tupled, tablegateway.DropItem.unapply)
+  def * = (id, name, requireLevel, enemyName)
 }
 
-class GatheringItems(tag: Tag) extends Table[tablegateway.GatheringItem](tag, "gathering_items") {
+class GatheringItems(tag: Tag) extends Table[(Int, String, Int, String)](tag, "gathering_items") {
   def id = column[Int]("id", O.PrimaryKey)
   def name = column[String]("name")
   def requireLevel = column[Int]("require_level")
   def requireGathererClass = column[String]("require_gatherer_class")
-  def * = (id, name, requireLevel, requireGathererClass) <> (tablegateway.GatheringItem.tupled, tablegateway.GatheringItem.unapply)
+  def * = (id, name, requireLevel, requireGathererClass)
 }
 
-class Spots(tag: Tag) extends Table[tablegateway.Spot](tag, "spots") {
+class Spots(tag: Tag) extends Table[(Int, String, Int, Int)](tag, "spots") {
   def id = column[Int]("id", O.PrimaryKey)
   def name = column[String]("name")
   def x = column[Int]("x")
   def y = column[Int]("y")
-  def * = (id, name, x, y) <> (tablegateway.Spot.tupled, tablegateway.Spot.unapply)
+  def * = (id, name, x, y)
 }
 
-class DropItemSpotRelations(tag: Tag) extends Table[tablegateway.DropItemSpotRelation](tag, "drop_item_spot_relations") {
+class DropItemSpotRelations(tag: Tag) extends Table[(Int, Int)](tag, "drop_item_spot_relations") {
   def dropItemId = column[Int]("drop_item_id")
   def spotId = column[Int]("spot_id")
-  def * = (dropItemId, spotId) <> (tablegateway.DropItemSpotRelation.tupled, tablegateway.DropItemSpotRelation.unapply)
+  def * = (dropItemId, spotId)
 }
 
-class GatheringItemSpotRelations(tag: Tag) extends Table[tablegateway.GatheringItemSpotRelation](tag, "gathering_item_spot_relations") {
+class GatheringItemSpotRelations(tag: Tag) extends Table[(Int, Int)](tag, "gathering_item_spot_relations") {
   def gatheringItemId = column[Int]("gathering_item_id")
   def spotId = column[Int]("spot_id")
-  def * = (gatheringItemId, spotId) <> (tablegateway.GatheringItemSpotRelation.tupled, tablegateway.GatheringItemSpotRelation.unapply)
+  def * = (gatheringItemId, spotId)
 }
