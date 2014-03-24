@@ -1,26 +1,29 @@
 package tablegateway
 import scala.slick.driver.H2Driver.simple._
+import scala.slick.driver.H2Driver
 
 object TableGatewayExample {
   def main(args: Array[String]) {
-    SpotFinder.findSpot("アプカレの卵").foreach(println)
+    Database.forURL("jdbc:h2:itemdb;DATABASE_TO_UPPER=false", driver = "org.h2.Driver") withSession {
+      implicit session =>
+        SpotFinder.findSpot("アプカレの卵").foreach(println)
+    }
   }
 }
 
 object SpotFinder {
-  def findSpot(itemName: String): Seq[Spot] = {
-    Database.forURL("jdbc:h2:itemdb;DATABASE_TO_UPPER=false", driver = "org.h2.Driver") withSession {
-      implicit session =>
-        val spotsForDrop = for(((i, r), s) <- dropItems.filter(_.name === itemName)
-          leftJoin dropItemSpotRelations on (_.id  === _.dropItemId)
-          leftJoin spots on ( _._2.spotId === _.id)
-        ) yield s
-        val spotsForGathering = for(((i, r), s) <- gatheringItems.filter(_.name === itemName)
-          leftJoin gatheringItemSpotRelations on (_.id  === _.gatheringItemId)
-          leftJoin spots on ( _._2.spotId === _.id)
-        ) yield s
-        spotsForDrop.list() ++ spotsForGathering.list()
-    }
+  def findSpot(itemName: String)(implicit session: H2Driver.backend.Session): Seq[Spot] = {
+      val spotsForDrop = for(((i, r), s) <- dropItems.filter(_.name === itemName)
+        leftJoin dropItemSpotRelations on (_.id  === _.dropItemId)
+        leftJoin spots on ( _._2.spotId === _.id)
+      ) yield s
+
+      val spotsForGathering = for(((i, r), s) <- gatheringItems.filter(_.name === itemName)
+        leftJoin gatheringItemSpotRelations on (_.id  === _.gatheringItemId)
+        leftJoin spots on ( _._2.spotId === _.id)
+      ) yield s
+
+      spotsForDrop.list() ++ spotsForGathering.list()
   }
 
   val dropItems = TableQuery[DropItems]
