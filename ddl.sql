@@ -1,4 +1,3 @@
-/* “G‚©‚ç‚Ìæ“¾ƒAƒCƒeƒ€ */
 create table drop_items(
 	id int primary key,
 	name varchar(255),
@@ -6,7 +5,7 @@ create table drop_items(
 	enemy_name varchar(255));
 create index on drop_items(name);
 create index on drop_items(require_level);
-/* ÌæƒAƒCƒeƒ€ */
+
 create table gathering_items(
 	id int primary key,
 	name varchar(255),
@@ -14,36 +13,36 @@ create table gathering_items(
 	require_gatherer_class varchar(255));
 create index on gathering_items(name);
 create index on gathering_items(require_level);
-/* êŠ */
+
 create table spots(
 	id int primary key,
 	name varchar(255),
 	x int,
 	y int);
-/* “G‚©‚ç‚Ìæ“¾ƒAƒCƒeƒ€‚ÆêŠ‚ÌŠÖ˜A */
+
 create table drop_item_spot_relations(
 	drop_item_id int,
 	spot_id int,
 	primary key(drop_item_id, spot_id));
-/* ÌæƒAƒCƒeƒ€‚ÆêŠ‚ÌŠÖ˜A */
+
 create table gathering_item_spot_relations(
 	gathering_item_id int,
 	spot_id int,
 	primary key(gathering_item_id, spot_id));
-/* ƒTƒ“ƒvƒ‹ƒf[ƒ^ */
+
 insert into drop_items values
-(1, 'ƒAƒvƒJƒŒ‚Ì—‘', 16, 'ƒAƒvƒJƒŒ'),
-(2, 'ƒ_ƒCƒAƒ}ƒCƒN‚ÌäF', 25, 'ƒx[ƒ“ƒ}ƒCƒN'),
-(3, 'ƒyƒCƒXƒ^‚Ì‘e”ç', 49, 'ƒoƒWƒŠƒXƒ^');
+(1, 'ã‚¢ãƒ—ã‚«ãƒ¬ã®åµ', 16, 'ã‚¢ãƒ—ã‚«ãƒ¬'),
+(2, 'ãƒ€ã‚¤ã‚¢ãƒã‚¤ã‚¯ã®è…±', 25, 'ãƒ™ãƒ¼ãƒ³ãƒã‚¤ã‚¯'),
+(3, 'ãƒšã‚¤ã‚¹ã‚¿ã®ç²—çš®', 49, 'ãƒã‚¸ãƒªã‚¹ã‚¿');
 insert into gathering_items values
-(1, '“S|', 11, 'ÌŒ@t'),
-(2, 'ƒAƒbƒvƒ‹', 41, '‰€Œ|t'),
-(3, 'ƒuƒ[ƒtƒBƒbƒVƒ…', 22, '’Ş‚èt');
+(1, 'é‰„é‹¼', 11, 'æ¡æ˜å¸«'),
+(2, 'ã‚¢ãƒƒãƒ—ãƒ«', 41, 'åœ’èŠ¸å¸«'),
+(3, 'ãƒ–ãƒ­ãƒ¼ãƒ•ã‚£ãƒƒã‚·ãƒ¥', 22, 'é‡£ã‚Šå¸«');
 insert into spots values
-(1, '“Œ•”X—Ñ', 13, 20),
-(2, 'zR‘O', 16, 2),
-(3, '“ì•”•½Œ´', 30, 25),
-(4, '»”™', 21, 19);
+(1, 'æ±éƒ¨æ£®æ—', 13, 20),
+(2, 'é‰±å±±å‰', 16, 2),
+(3, 'å—éƒ¨å¹³åŸ', 30, 25),
+(4, 'ç ‚æ¼ ', 21, 19);
 insert into drop_item_spot_relations values
 (1, 1),
 (1, 3),
