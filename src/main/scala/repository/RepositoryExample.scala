@@ -4,7 +4,7 @@ import scala.slick.driver.H2Driver.simple._
 import scala.slick.driver.H2Driver
 
 package ui {
-  
+
 object repositoryExample {
   def main(args: Array[String]) {
     Database.forURL("jdbc:h2:itemdb;DATABASE_TO_UPPER=false", driver = "org.h2.Driver") withSession {

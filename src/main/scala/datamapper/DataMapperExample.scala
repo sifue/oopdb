@@ -6,15 +6,8 @@ object DataMapperExample {
   def main(args: Array[String]) {
     Database.forURL("jdbc:h2:itemdb;DATABASE_TO_UPPER=false", driver = "org.h2.Driver") withSession {
       implicit session =>
-        new SpotPrinter().print("アプカレの卵")
+        new SpotFinder().find("アプカレの卵").foreach(println)
     }
-  }
-}
-
-class SpotPrinter {
-  val spotFinder = new SpotFinder()
-  def print(itemName: String)(implicit session: H2Driver.backend.Session) = {
-    spotFinder.find(itemName).foreach(println)
   }
 }
 

@@ -19,6 +19,8 @@ create table drop_item_spot_relations(
 	drop_item_id int,
 	spot_id int,
 	primary key(drop_item_id, spot_id));
+create index on drop_item_spot_relations(drop_item_id);
+create index on drop_item_spot_relations(spot_id);
 
 /* サンプルデータ */
 insert into drop_items values
