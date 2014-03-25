@@ -17,20 +17,12 @@ object SpotFinder {
         leftJoin dropItemSpotRelations on (_.id  === _.dropItemId)
         leftJoin spots on ( _._2.spotId === _.id)
       ) yield s
-
-      val spotsForGathering = for(((i, r), s) <- gatheringItems.filter(_.name === itemName)
-        leftJoin gatheringItemSpotRelations on (_.id  === _.gatheringItemId)
-        leftJoin spots on ( _._2.spotId === _.id)
-      ) yield s
-
-    (spotsForDrop.list() ++ spotsForGathering.list()).map(s => Spot(s._1, s._2, s._3, s._4))
+    spotsForDrop.list().map(s => Spot(s._1, s._2, s._3, s._4))
   }
 
   val dropItems = TableQuery[DropItems]
-  val gatheringItems = TableQuery[GatheringItems]
   val spots = TableQuery[Spots]
   val dropItemSpotRelations = TableQuery[DropItemSpotRelations]
-  val gatheringItemSpotRelations = TableQuery[GatheringItemSpotRelations]
 }
 
 case class Spot(id: Int, name: String, x: Int, y: Int)
@@ -41,14 +33,6 @@ class DropItems(tag: Tag) extends Table[(Int, String, Int, String)](tag, "drop_i
   def requireLevel = column[Int]("require_level")
   def enemyName = column[String]("enemy_name")
   def * = (id, name, requireLevel, enemyName)
-}
-
-class GatheringItems(tag: Tag) extends Table[(Int, String, Int, String)](tag, "gathering_items") {
-  def id = column[Int]("id", O.PrimaryKey)
-  def name = column[String]("name")
-  def requireLevel = column[Int]("require_level")
-  def requireGathererClass = column[String]("require_gatherer_class")
-  def * = (id, name, requireLevel, requireGathererClass)
 }
 
 class Spots(tag: Tag) extends Table[(Int, String, Int, Int)](tag, "spots") {
@@ -63,10 +47,4 @@ class DropItemSpotRelations(tag: Tag) extends Table[(Int, Int)](tag, "drop_item_
   def dropItemId = column[Int]("drop_item_id")
   def spotId = column[Int]("spot_id")
   def * = (dropItemId, spotId)
-}
-
-class GatheringItemSpotRelations(tag: Tag) extends Table[(Int, Int)](tag, "gathering_item_spot_relations") {
-  def gatheringItemId = column[Int]("gathering_item_id")
-  def spotId = column[Int]("spot_id")
-  def * = (gatheringItemId, spotId)
 }
