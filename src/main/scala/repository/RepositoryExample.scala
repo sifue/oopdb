@@ -5,31 +5,29 @@ import scala.slick.driver.H2Driver
 
 package ui {
 
-object repositoryExample {
-  def main(args: Array[String]) {
-    Database.forURL("jdbc:h2:itemdb;DATABASE_TO_UPPER=false", driver = "org.h2.Driver") withSession {
-      implicit session =>
-        new SpotPrinter().print("アプカレの卵")
-    }
+object repositoryExample extends App {
+  Database.forURL("jdbc:h2:db;database_to_upper=false", driver = "org.h2.Driver") withSession {
+    implicit session =>
+      new TagPrinter().print("ニコラジ")
   }
 }
 
-class SpotPrinter {
-  val spotFinder = new application.SpotFinder()
+class TagPrinter {
+  val spotFinder = new application.TagFinder()
 
-  def print(itemName: String)(implicit session: H2Driver.backend.Session) = {
-    spotFinder.find(itemName).foreach(println)
+  def print(programTitle: String)(implicit session: H2Driver.backend.Session) = {
+    spotFinder.find(programTitle).foreach(println)
   }
 }
 }
 
 package application {
 
-class SpotFinder {
+class TagFinder {
   private val repository = new domain.SpotRepository()
 
-  def find(itemName: String)(implicit session: H2Driver.backend.Session): Seq[domain.Spot] = {
-    repository.findSpot(itemName)
+  def find(programTitle: String)(implicit session: H2Driver.backend.Session): Seq[domain.Tag] = {
+    repository.findTag(programTitle)
   }
 }
 }
@@ -38,53 +36,55 @@ package domain {
 
 import repository.infrastracture._
 
-case class Spot(id: Int, name: String, x: Int, y: Int)
+case class Tag(id: Int, name: String, isCategory: Boolean)
 
 class SpotRepository {
-  private val dropItems = TableQuery[DropItems]
-  private val spots = TableQuery[Spots]
-  private val dropItemSpotRelations = TableQuery[DropItemSpotRelations]
+  private val dropItems = TableQuery[Programs]
+  private val spots = TableQuery[Tags]
+  private val dropItemSpotRelations = TableQuery[ProgramTagRelations]
 
-  def findSpot(itemName: String)(implicit session: H2Driver.backend.Session): Seq[domain.Spot] = {
-    val spotsForDrop = for(((i, r), s) <- dropItems.filter(_.name === itemName)
-      leftJoin dropItemSpotRelations on (_.id  === _.dropItemId)
-      leftJoin spots on ( _._2.spotId === _.id)
+  def findTag(itemName: String)(implicit session: H2Driver.backend.Session): Seq[domain.Tag] = {
+    val spotsForDrop = for(((i, r), s) <- dropItems.filter(_.title === itemName)
+      leftJoin dropItemSpotRelations on (_.id  === _.programId)
+      leftJoin spots on ( _._2.tagId === _.id)
     ) yield s
-    spotsForDrop.list().map(OrmSpot.unapply).toList.flatten.map(Spot.tupled)
+    spotsForDrop.list().map(OrmTag.unapply).toList.flatten.map(Tag.tupled)
   }
 
-  def toDomainEntity(orm: OrmSpot): Spot = {
-    OrmSpot.unapply(orm).map(Spot.tupled).get
+  def toDomainEntity(orm: OrmTag): Tag = {
+    OrmTag.unapply(orm).map(Tag.tupled).get
   }
 }
 }
 
  package infrastracture {
 
- class DropItems(tag: Tag) extends Table[OrmDropItem](tag, "drop_items") {
+ import java.sql.Timestamp
+ import scala.slick.lifted
+
+ class Programs(tag: lifted.Tag) extends Table[OrmProgram](tag, "programs") {
+   def id = column[Int]("id", O.PrimaryKey)
+   def title = column[String]("title")
+   def beginTime = column[Timestamp]("begin_time")
+   def endTime = column[Timestamp]("end_time")
+   def * = (id, title, beginTime, endTime) <> (OrmProgram.tupled, OrmProgram.unapply)
+ }
+
+ class Tags(tag: lifted.Tag) extends Table[OrmTag](tag, "tags") {
    def id = column[Int]("id", O.PrimaryKey)
    def name = column[String]("name")
-   def requireLevel = column[Int]("require_level")
-   def enemyName = column[String]("enemy_name")
-   def * = (id, name, requireLevel, enemyName) <> (OrmDropItem.tupled, OrmDropItem.unapply)
+   def isCategory = column[Boolean]("is_category")
+   def * = (id, name, isCategory) <> (OrmTag.tupled, OrmTag.unapply)
  }
 
- class Spots(tag: Tag) extends Table[OrmSpot](tag, "spots") {
-   def id = column[Int]("id", O.PrimaryKey)
-   def name = column[String]("name")
-   def x = column[Int]("x")
-   def y = column[Int]("y")
-   def * = (id, name, x, y) <> (OrmSpot.tupled, OrmSpot.unapply)
+ class ProgramTagRelations(tag: lifted.Tag) extends Table[OrmProgramTagRelation](tag, "program_tag_relations") {
+   def programId = column[Int]("program_id")
+   def tagId = column[Int]("tag_id")
+   def * = (programId, tagId) <> (OrmProgramTagRelation.tupled, OrmProgramTagRelation.unapply)
  }
 
- class DropItemSpotRelations(tag: Tag) extends Table[OrmDropItemSpotRelation](tag, "drop_item_spot_relations") {
-   def dropItemId = column[Int]("drop_item_id")
-   def spotId = column[Int]("spot_id")
-   def * = (dropItemId, spotId) <> (OrmDropItemSpotRelation.tupled, OrmDropItemSpotRelation.unapply)
- }
-
- case class OrmDropItem(id: Int, name: String, requireLevel: Int, enemyName: String)
- case class OrmDropItemSpotRelation(dropItemId: Int, spotId: Int)
- case class OrmSpot(id: Int, name: String, x: Int, y: Int)
+ case class OrmProgram(id: Int, title: String, beginTime: Timestamp, endTime: Timestamp)
+ case class OrmProgramTagRelation(programId: Int, tagId: Int)
+ case class OrmTag(id: Int, name: String, isCategory: Boolean)
  }
 

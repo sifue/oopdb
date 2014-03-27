@@ -1,59 +1,58 @@
 package datamapper
 import scala.slick.driver.H2Driver.simple._
 import scala.slick.driver.H2Driver
+import scala.slick.lifted
+import java.sql.Timestamp
 
-object DataMapperExample {
-  def main(args: Array[String]) {
-    Database.forURL("jdbc:h2:itemdb;DATABASE_TO_UPPER=false", driver = "org.h2.Driver") withSession {
-      implicit session =>
-        new SpotFinder().find("アプカレの卵").foreach(println)
-    }
+object DataMapperExample extends App {
+  Database.forURL("jdbc:h2:db;database_to_upper=false", driver = "org.h2.Driver") withSession {
+    implicit session =>
+      new TagFinder().find("ニコラジ").foreach(println)
   }
 }
 
-class SpotFinder {
-  private val dataMapper = new SpotDataMapper()
-  def find(itemName: String)(implicit session: H2Driver.backend.Session): Seq[Spot] = {
-    dataMapper.findSpot(itemName)
+class TagFinder {
+  private val dataMapper = new TagDataMapper()
+  def find(programTitle: String)(implicit session: H2Driver.backend.Session): Seq[Tag] = {
+    dataMapper.findTag(programTitle)
   }
 }
 
-class SpotDataMapper {
-  private val dropItems = TableQuery[DropItems]
-  private val spots = TableQuery[Spots]
-  private val dropItemSpotRelations = TableQuery[DropItemSpotRelations]
+class TagDataMapper {
+  private val programs = TableQuery[Programs]
+  private val tags = TableQuery[Tags]
+  private val programTagRelations = TableQuery[ProgramTagRelations]
 
-  def findSpot(itemName: String)(implicit session: H2Driver.backend.Session): Seq[Spot] = {
-    val spotsForDrop = for(((i, r), s) <- dropItems.filter(_.name === itemName)
-      leftJoin dropItemSpotRelations on (_.id  === _.dropItemId)
-      leftJoin spots on ( _._2.spotId === _.id)
+  def findTag(programTitle: String)(implicit session: H2Driver.backend.Session): Seq[Tag] = {
+    val relatedTags = for(((i, r), s) <- programs.filter(_.title === programTitle)
+      leftJoin programTagRelations on (_.id  === _.programId)
+      leftJoin tags on ( _._2.tagId === _.id)
     ) yield s
-    spotsForDrop.list()
+    relatedTags.list()
   }
 }
 
-class DropItems(tag: Tag) extends Table[datamapper.DropItem](tag, "drop_items") {
+class Programs(tag: lifted.Tag) extends Table[datamapper.Program](tag, "programs") {
+  def id = column[Int]("id", O.PrimaryKey)
+  def title = column[String]("title")
+  def beginTime = column[Timestamp]("begin_time")
+  def endTime = column[Timestamp]("end_time")
+  def * = (id, title, beginTime, endTime) <> (datamapper.Program.tupled, datamapper.Program.unapply)
+}
+
+class Tags(tag: lifted.Tag) extends Table[datamapper.Tag](tag, "tags") {
   def id = column[Int]("id", O.PrimaryKey)
   def name = column[String]("name")
-  def requireLevel = column[Int]("require_level")
-  def enemyName = column[String]("enemy_name")
-  def * = (id, name, requireLevel, enemyName) <> (datamapper.DropItem.tupled, datamapper.DropItem.unapply)
+  def isCategory = column[Boolean]("is_category")
+  def * = (id, name, isCategory) <> (datamapper.Tag.tupled, datamapper.Tag.unapply)
 }
 
-class Spots(tag: Tag) extends Table[datamapper.Spot](tag, "spots") {
-  def id = column[Int]("id", O.PrimaryKey)
-  def name = column[String]("name")
-  def x = column[Int]("x")
-  def y = column[Int]("y")
-  def * = (id, name, x, y) <> (datamapper.Spot.tupled, datamapper.Spot.unapply)
+class ProgramTagRelations(tag: lifted.Tag) extends Table[datamapper.ProgramTagRelation](tag, "program_tag_relations") {
+  def programId = column[Int]("program_id")
+  def tagId = column[Int]("tag_id")
+  def * = (programId, tagId) <> (datamapper.ProgramTagRelation.tupled, datamapper.ProgramTagRelation.unapply)
 }
 
-class DropItemSpotRelations(tag: Tag) extends Table[datamapper.DropItemSpotRelation](tag, "drop_item_spot_relations") {
-  def dropItemId = column[Int]("drop_item_id")
-  def spotId = column[Int]("spot_id")
-  def * = (dropItemId, spotId) <> (datamapper.DropItemSpotRelation.tupled, datamapper.DropItemSpotRelation.unapply)
-}
-
-case class DropItem(id: Int, name: String, requireLevel: Int, enemyName: String)
-case class DropItemSpotRelation(dropItemId: Int, spotId: Int)
-case class Spot(id: Int, name: String, x: Int, y: Int)
+case class Program(id: Int, title: String, beginTime: Timestamp, endTime: Timestamp)
+case class ProgramTagRelation(programId: Int, tagId: Int)
+case class Tag(id: Int, name: String, isCategory: Boolean)
