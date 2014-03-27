@@ -13,10 +13,10 @@ object repositoryExample extends App {
 }
 
 class TagPrinter {
-  val spotFinder = new application.TagFinder()
+  val tagFinder = new application.TagFinder()
 
   def print(programTitle: String)(implicit session: H2Driver.backend.Session) = {
-    spotFinder.find(programTitle).foreach(println)
+    tagFinder.find(programTitle).foreach(println)
   }
 }
 }
@@ -24,7 +24,7 @@ class TagPrinter {
 package application {
 
 class TagFinder {
-  private val repository = new domain.SpotRepository()
+  private val repository = new domain.TagRepository()
 
   def find(programTitle: String)(implicit session: H2Driver.backend.Session): Seq[domain.Tag] = {
     repository.findTag(programTitle)
@@ -38,17 +38,17 @@ import repository.infrastracture._
 
 case class Tag(id: Int, name: String, isCategory: Boolean)
 
-class SpotRepository {
-  private val dropItems = TableQuery[Programs]
-  private val spots = TableQuery[Tags]
-  private val dropItemSpotRelations = TableQuery[ProgramTagRelations]
+class TagRepository {
+  private val programs = TableQuery[Programs]
+  private val tags = TableQuery[Tags]
+  private val programTagRelations = TableQuery[ProgramTagRelations]
 
-  def findTag(itemName: String)(implicit session: H2Driver.backend.Session): Seq[domain.Tag] = {
-    val spotsForDrop = for(((i, r), s) <- dropItems.filter(_.title === itemName)
-      leftJoin dropItemSpotRelations on (_.id  === _.programId)
-      leftJoin spots on ( _._2.tagId === _.id)
+  def findTag(programTitle: String)(implicit session: H2Driver.backend.Session): Seq[domain.Tag] = {
+    val relatedTags = for(((i, r), s) <- programs.filter(_.title === programTitle)
+      leftJoin programTagRelations on (_.id  === _.programId)
+      leftJoin tags on ( _._2.tagId === _.id)
     ) yield s
-    spotsForDrop.list().map(OrmTag.unapply).toList.flatten.map(Tag.tupled)
+    relatedTags.list().map(OrmTag.unapply).toList.flatten.map(Tag.tupled)
   }
 
   def toDomainEntity(orm: OrmTag): Tag = {
