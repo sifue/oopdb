@@ -36,7 +36,10 @@ package domain {
 
 import repository.infrastracture._
 
-case class Tag(id: Int, name: String, isCategory: Boolean)
+case class Tag(id: Int, name: String, isCategory: Boolean) {
+  def relatedProgramCount: Int = ???
+  def hasNicopediaArticle: Boolean = ???
+}
 
 class TagRepository {
   private val programs = TableQuery[Programs]
