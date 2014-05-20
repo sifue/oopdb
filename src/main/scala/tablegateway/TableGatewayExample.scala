@@ -13,10 +13,15 @@ object TableGatewayExample extends App {
 }
 
 object TagFinder {
-  def find(programTitle: String)(implicit session: H2Driver.backend.Session): Seq[Tag] = {
-      val relatedTags = for(((i, r), s) <- programs.filter(_.title === programTitle)
-        leftJoin programTagRelations on (_.id  === _.programId)
-        leftJoin tags on ( _._2.tagId === _.id)
+  def find(programTitle: String)
+          (implicit session: H2Driver.backend.Session)
+  : Seq[Tag] = {
+    // 表結合をコードで記述
+    val relatedTags =
+      for (((i, r), s)
+           <- programs.filter(_.title === programTitle)
+        leftJoin programTagRelations on (_.id === _.programId)
+        leftJoin tags on (_._2.tagId === _.id)
       ) yield s
     relatedTags.list().map(s => Tag(s._1, s._2, s._3))
   }
@@ -28,7 +33,10 @@ object TagFinder {
 
 case class Tag(id: Int, name: String, isCategory: Boolean)
 
-class Programs(tag: lifted.Tag) extends Table[(Int, String, Timestamp, Timestamp)](tag, "programs") {
+// 以下で、テーブルをオブジェクトとして扱えるように定義
+class Programs(tag: lifted.Tag)
+  extends Table
+    [(Int, String, Timestamp, Timestamp)](tag, "programs") {
   def id = column[Int]("id", O.PrimaryKey)
   def title = column[String]("title")
   def beginTime = column[Timestamp]("begin_time")
@@ -36,14 +44,16 @@ class Programs(tag: lifted.Tag) extends Table[(Int, String, Timestamp, Timestamp
   def * = (id, title, beginTime, endTime)
 }
 
-class Tags(tag: lifted.Tag) extends Table[(Int, String, Boolean)](tag, "tags") {
+class Tags(tag: lifted.Tag)
+  extends Table[(Int, String, Boolean)](tag, "tags") {
   def id = column[Int]("id", O.PrimaryKey)
   def name = column[String]("name")
   def isCategory = column[Boolean]("is_category")
   def * = (id, name, isCategory)
 }
 
-class ProgramTagRelations(tag: lifted.Tag) extends Table[(Int, Int)](tag, "program_tag_relations") {
+class ProgramTagRelations(tag: lifted.Tag)
+  extends Table[(Int, Int)](tag, "program_tag_relations") {
   def programId = column[Int]("program_id")
   def tagId = column[Int]("tag_id")
   def * = (programId, tagId)

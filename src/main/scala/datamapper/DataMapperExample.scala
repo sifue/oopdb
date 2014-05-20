@@ -13,46 +13,67 @@ object DataMapperExample extends App {
 
 class TagFinder {
   private val dataMapper = new TagDataMapper()
-  def find(programTitle: String)(implicit session: H2Driver.backend.Session): Seq[Tag] = {
+  def find(programTitle: String)
+          (implicit session: H2Driver.backend.Session)
+  : Seq[Tag] = {
     dataMapper.findTag(programTitle)
   }
 }
 
+// データマッパが複雑なテーブル操作を隠蔽
 class TagDataMapper {
   private val programs = TableQuery[Programs]
   private val tags = TableQuery[Tags]
-  private val programTagRelations = TableQuery[ProgramTagRelations]
+  private val programTagRelations =
+    TableQuery[ProgramTagRelations]
 
-  def findTag(programTitle: String)(implicit session: H2Driver.backend.Session): Seq[Tag] = {
-    val relatedTags = for(((i, r), s) <- programs.filter(_.title === programTitle)
-      leftJoin programTagRelations on (_.id  === _.programId)
-      leftJoin tags on ( _._2.tagId === _.id)
-    ) yield s
+  def findTag(programTitle: String)
+             (implicit session: H2Driver.backend.Session)
+  : Seq[Tag] = {
+    val relatedTags =
+      for (((i, r), s)
+           <- programs.filter(_.title === programTitle)
+        leftJoin programTagRelations on (_.id === _.programId)
+        leftJoin tags on (_._2.tagId === _.id)
+      ) yield s
     relatedTags.list()
   }
 }
 
-class Programs(tag: lifted.Tag) extends Table[datamapper.Program](tag, "programs") {
+// 以下のようにデータを保持するクラスとテーブルを分離して記述
+class Programs(tag: lifted.Tag)
+  extends Table[datamapper.Program](tag, "programs") {
   def id = column[Int]("id", O.PrimaryKey)
   def title = column[String]("title")
   def beginTime = column[Timestamp]("begin_time")
   def endTime = column[Timestamp]("end_time")
-  def * = (id, title, beginTime, endTime) <> (datamapper.Program.tupled, datamapper.Program.unapply)
+  def * = (id, title, beginTime, endTime) <>
+    (datamapper.Program.tupled, datamapper.Program.unapply)
 }
 
-class Tags(tag: lifted.Tag) extends Table[datamapper.Tag](tag, "tags") {
+class Tags(tag: lifted.Tag)
+  extends Table[datamapper.Tag](tag, "tags") {
   def id = column[Int]("id", O.PrimaryKey)
   def name = column[String]("name")
   def isCategory = column[Boolean]("is_category")
-  def * = (id, name, isCategory) <> (datamapper.Tag.tupled, datamapper.Tag.unapply)
+  def * = (id, name, isCategory) <>
+    (datamapper.Tag.tupled, datamapper.Tag.unapply)
 }
 
-class ProgramTagRelations(tag: lifted.Tag) extends Table[datamapper.ProgramTagRelation](tag, "program_tag_relations") {
+class ProgramTagRelations(tag: lifted.Tag)
+  extends Table[datamapper.ProgramTagRelation](tag,
+    "program_tag_relations") {
   def programId = column[Int]("program_id")
   def tagId = column[Int]("tag_id")
-  def * = (programId, tagId) <> (datamapper.ProgramTagRelation.tupled, datamapper.ProgramTagRelation.unapply)
+  def * = (programId, tagId) <>
+    (datamapper.ProgramTagRelation.tupled,
+      datamapper.ProgramTagRelation.unapply)
 }
 
-case class Program(id: Int, title: String, beginTime: Timestamp, endTime: Timestamp)
+case class Program(
+                    id: Int,
+                    title: String,
+                    beginTime: Timestamp,
+                    endTime: Timestamp)
 case class ProgramTagRelation(programId: Int, tagId: Int)
 case class Tag(id: Int, name: String, isCategory: Boolean)
